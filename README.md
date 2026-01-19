@@ -1,207 +1,57 @@
-<h1>SQL Retail Sales Analysis</h1>
+<h1>Retail Sales Analysis Project</h1>
 
-<p>
-This project is a guided SQL analysis focused on retail sales data.
-It demonstrates database creation, data cleaning, exploratory data analysis,
-and business-focused SQL querying using PostgreSQL.
-</p>
-
-<h2>Project Objective</h2>
-
-<p>
-The objective of this project is to analyze retail transaction data and answer
-key business questions using structured SQL queries.
-</p>
-
-<p style="font-size:14px;">
-The project emphasizes data preparation, handling missing values,
-and applying analytical SQL concepts such as aggregations,
-window functions, and common table expressions.
-</p>
-
-<h2>Tools Used</h2>
-
-<p>
-PostgreSQL (pgAdmin) is used for database management and SQL execution,
-while Microsoft Excel is used for initial data inspection.
-</p>
+<p>This project involves a comprehensive analysis of retail sales data to uncover customer purchasing patterns, category performance, and sales trends. The workflow covers the entire data pipeline, from database schema creation and data cleaning to complex analytical querying.</p>
 
 <h2>Project Workflow</h2>
 
-<p>
-The analysis follows a step-by-step workflow starting from data ingestion
-to answering business-driven analytical questions.
-</p>
+<h3>1. Data Preparation and Database Setup</h3> <p>The process begins by preparing the raw data in CSV format and establishing a structured environment in PostgreSQL (pgAdmin).</p>
 
-<p style="font-size:14px;">
-The workflow includes downloading the dataset, database setup,
-table creation, data import, data cleaning, exploration, and analysis.
-</p>
+<ul> <li>Download the retail sales dataset as a CSV file.</li> <li>Identify column names and data types from the source file.</li> <li>Create a new database in pgAdmin named <code>sql_project_p1</code>.</li> </ul>
 
-<h2>Database Setup</h2>
+<pre> -- SQL Retail Sales Analysis - P1 CREATE DATABASE sql_project_p1; </pre>
 
-<p>
-A new PostgreSQL database is created to store and analyze retail sales data.
-</p>
+<h3>2. Schema Definition</h3> <p>A table is defined to store the retail transactions with specific constraints and data types to ensure consistency, particularly for dates and monetary values.</p>
 
-<pre><code>
-CREATE DATABASE sql_project_p1;
-</code></pre>
+<pre> -- Creating the retail sales table DROP TABLE IF EXISTS retail_sales; CREATE TABLE retail_sales ( transactions_id INT PRIMARY KEY, sale_date DATE, sale_time TIME, customer_id INT, gender VARCHAR(15), age INT, category VARCHAR(15),
 
-<h2>Table Creation</h2>
+quantity INT, price_per_unit FLOAT,
 
-<p>
-A single table is created to store all transaction-level retail sales data.
-Date fields are formatted using the YYYY-MM-DD standard.
-</p>
+cogs FLOAT, total_sale FLOAT ); </pre>
 
-<pre><code>
-DROP TABLE IF EXISTS retail_sales;
+<h3>3. Data Ingestion and Verification</h3> <p>Data is imported into the <code>retail_sales</code> table. It is crucial to disable the "Headers" option during import since the table structure is already defined. Post-import, the record count is verified against the source file using the following command:</p>
 
-CREATE TABLE retail_sales
-(
-    transactions_id INT PRIMARY KEY,
-    sale_date DATE,
-    sale_time TIME,
-    customer_id INT,
-    gender VARCHAR(15),
-    age INT,
-    category VARCHAR(15),
-    quantity INT,
-    price_per_unit FLOAT,
-    cogs FLOAT,
-    total_sale FLOAT
-);
-</code></pre>
+<pre>SELECT COUNT(*) FROM retail_sales;</pre>
 
-<h2>Data Import and Validation</h2>
+<h3>4. Data Cleaning</h3> <p>To ensure the accuracy of the analysis, the dataset is checked for null values. Any records with missing critical information are identified and removed.</p>
 
-<p>
-The dataset is imported into the table using pgAdmin’s import feature.
-Column headers are disabled during import as they are already defined.
-</p>
+<pre> -- Identifying records with NULL values SELECT * FROM retail_sales WHERE transactions_id IS NULL OR sale_date IS NULL OR sale_time IS NULL OR customer_id IS NULL OR gender IS NULL OR category IS NULL OR quantity IS NULL OR cogs IS NULL OR total_sale IS NULL;
 
-<p style="font-size:14px;">
-After import, row counts are validated against the CSV file
-and any errors are reviewed using the View Processes option.
-</p>
+-- Deleting NULL records DELETE FROM retail_sales WHERE transactions_id IS NULL OR sale_date IS NULL OR sale_time IS NULL OR gender IS NULL OR category IS NULL OR quantity IS NULL OR cogs IS NULL OR total_sale IS NULL; </pre>
 
-<h2>Handling Missing Values</h2>
+<h2>Data Exploration and Basic Insights</h2> <p>Initial exploration helps understand the scale and diversity of the business operations.</p>
 
-<p>
-Null values are identified to ensure data quality before analysis.
-</p>
+<ul> <li><strong>Total Sales Count:</strong> <code>SELECT COUNT(*) as total_sale FROM retail_sales;</code></li> <li><strong>Unique Customer Base:</strong> <code>SELECT COUNT(DISTINCT customer_id) as total_unique_customers FROM retail_sales;</code></li> <li><strong>Product Categories:</strong> <code>SELECT DISTINCT category FROM retail_sales;</code></li> </ul>
 
-<pre><code>
-SELECT * FROM retail_sales
-WHERE
-    transactions_id IS NULL
-    OR sale_date IS NULL
-    OR sale_time IS NULL
-    OR customer_id IS NULL
-    OR gender IS NULL
-    OR age IS NULL
-    OR category IS NULL
-    OR quantity IS NULL
-    OR cogs IS NULL
-    OR total_sale IS NULL;
-</code></pre>
+<h2>Business Analysis (SQL Queries)</h2>
 
-<p style="font-size:14px;">
-Records containing critical missing values are removed to maintain
-data consistency and analytical accuracy.
-</p>
+<h3>Category and Date Filtering</h3> <p>Retrieving transactions for specific timeframes or product categories, such as clothing sales in November 2022 where quantities exceeded 10.</p>
 
-<pre><code>
-DELETE FROM retail_sales
-WHERE
-    transactions_id IS NULL
-    OR sale_date IS NULL
-    OR sale_time IS NULL
-    OR gender IS NULL
-    OR category IS NULL
-    OR quantity IS NULL
-    OR cogs IS NULL
-    OR total_sale IS NULL;
-</code></pre>
+<pre> SELECT category, SUM(quantity) FROM retail_sales WHERE category = 'Clothing' AND TO_CHAR(sale_date, 'YYYY-MM') = '2022-11' GROUP BY 1; </pre>
 
-<h2>Exploratory Data Analysis</h2>
+<h3>Category Performance</h3> <p>Calculating total sales and order counts per category to identify the highest revenue generators.</p>
 
-<p>
-Initial exploration is performed to understand the scale and structure
-of the dataset.
-</p>
+<pre> SELECT category, SUM(total_sale) as net_sale, COUNT(*) as total_orders FROM retail_sales GROUP BY 1; </pre>
 
-<p style="font-size:14px;">
-This includes counting total sales, identifying unique customers,
-and listing distinct product categories.
-</p>
+<h3>Customer Demographics</h3> <p>Analyzing the average age of customers in specific segments, like the 'Beauty' category, to understand target audiences.</p>
 
-<pre><code>
-SELECT COUNT(*) AS total_sales FROM retail_sales;
-</code></pre>
+<pre> SELECT ROUND(AVG(age), 2) as Average_age FROM retail_sales WHERE category = 'Beauty'; </pre>
 
-<pre><code>
-SELECT COUNT(DISTINCT customer_id) AS total_customers FROM retail_sales;
-</code></pre>
+<h3>Advanced Time-Series Analysis</h3> <p>Using Window Functions (RANK) to identify the best-selling month for each year based on average sales.</p>
 
-<pre><code>
-SELECT DISTINCT category FROM retail_sales;
-</code></pre>
+<pre> SELECT year, month, avg_sale FROM ( SELECT EXTRACT(YEAR FROM sale_date) as year, EXTRACT(MONTH FROM sale_date) as month, AVG(total_sale) as avg_sale, RANK() OVER(PARTITION BY EXTRACT(YEAR FROM sale_date) ORDER BY AVG(total_sale) DESC) as rank FROM retail_sales GROUP BY 1, 2 ) as t1 WHERE rank = 1; </pre>
 
-<h2>Business Questions and Analysis</h2>
+<h3>Shift Analysis</h3> <p>Categorizing transactions into time-based shifts (Morning, Afternoon, Evening) using Common Table Expressions (CTE) and CASE statements.</p>
 
-<p>
-SQL queries are written to answer common retail business questions
-related to sales performance, customer behavior, and trends.
-</p>
+<pre> WITH hourly_sale AS ( SELECT , CASE WHEN EXTRACT(HOUR FROM sale_time) < 12 THEN 'Morning' WHEN EXTRACT(HOUR FROM sale_time) BETWEEN 12 AND 17 THEN 'Afternoon' ELSE 'Evening' END as shift FROM retail_sales ) SELECT shift, COUNT() AS total_orders FROM hourly_sale GROUP BY shift; </pre>
 
-<p style="font-size:14px;">
-The analysis covers date-based filtering, category performance,
-customer demographics, transaction thresholds,
-and time-based sales patterns.
-</p>
-
-<h3>Examples of Business Analysis</h3>
-
-<p style="font-size:14px;">
-Retrieve sales from a specific date, analyze category-wise performance,
-calculate average customer age by category, identify high-value transactions,
-and determine top customers based on total spending.
-</p>
-
-<h2>Advanced SQL Concepts Used</h2>
-
-<p>
-The project applies intermediate SQL concepts to extract deeper insights.
-</p>
-
-<p style="font-size:14px;">
-These include window functions for ranking,
-date extraction for monthly analysis,
-and Common Table Expressions (CTEs) for shift-based sales segmentation.
-</p>
-
-<h2>Shift-Based Sales Analysis</h2>
-
-<p>
-Sales are categorized into Morning, Afternoon, and Evening shifts
-based on transaction time.
-</p>
-
-<p style="font-size:14px;">
-This helps identify ordering patterns across different times of the day
-and supports operational planning.
-</p>
-
-<h2>Project Outcome</h2>
-
-<p>
-The project successfully demonstrates a complete SQL-based
-retail sales analysis workflow.
-</p>
-
-<p style="font-size:14px;">
-It highlights practical SQL usage for data cleaning,
-exploratory analysis, and answering real-world business questions.
-</p>
+<h2>Conclusion</h2> <p>This project successfully demonstrates the use of SQL for data cleaning, transformation, and complex business logic. The insights generated regarding customer shifts, high-value categories, and monthly performance provide a solid foundation for data-driven retail strategies.</p>
